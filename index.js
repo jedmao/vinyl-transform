@@ -9,7 +9,7 @@ function createStream(transform) {
   return through2.obj(write, flush)
 
   function write(file, _, next) {
-    if (file.isNull()) return this.push(file), next()
+    if (file.isNull()) return next(null, file)
 
     var output = transform(file.path)
     var contents = file.contents
@@ -19,8 +19,7 @@ function createStream(transform) {
       file.contents.pipe(output)
       file.contents.on('error', stream.emit.bind(stream, 'error'))
       file.contents = output
-      this.push(file)
-      return next()
+      return next(null, file)
     }
 
     from([contents])
@@ -28,8 +27,7 @@ function createStream(transform) {
       .pipe(bl(function(err, buffer) {
         if (err) return stream.emit('error', err)
         file.contents = buffer
-        stream.push(file)
-        next()
+      	next(null, file)
       }))
   }
 
